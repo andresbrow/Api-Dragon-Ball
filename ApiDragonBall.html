@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Dragon Ball - Planetas</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #0b1020; color: #e6eef8; }
+    h1 { text-align: center; }
+    a { color:#f59e0b; text-decoration:none; }
+    a:hover { text-decoration:underline; }
+
+    /* Estilos grid */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(220px,1fr)); gap: 16px; margin-top: 20px; }
+    .card { background: #16213e; border-radius: 10px; padding: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); text-align:center; }
+    .card img { width: 100%; height: 140px; object-fit: cover; border-radius: 8px; cursor: pointer; }
+    .card .name { margin-top: 8px; font-weight: bold; }
+
+    /* Estilos detalle */
+    .container { max-width: 800px; margin: auto; background:#16213e; padding:20px; border-radius:12px; box-shadow:0 6px 16px rgba(0,0,0,0.5);}
+    img.detail { display:block; margin: auto; border-radius: 10px; width: 100%; max-width: 400px; }
+    .meta { margin-top: 16px; font-size: 1rem; line-height:1.6; }
+
+    #detalle { display:none; }
+    #lista { display:none; }
+  </style>
+</head>
+<body>
+  <!-- Vista lista -->
+  <section id="lista">
+    <h1>🌍 Planetas - Dragon Ball API</h1>
+    <div id="grid" class="grid"></div>
+  </section>
+
+  <!-- Vista detalle -->
+  <section id="detalle">
+    <div class="container">
+      <a href="index.html">← Volver a la lista</a>
+      <h1 id="name">Cargando...</h1>
+      <img id="image" class="detail" alt="Imagen del planeta" />
+      <div id="meta" class="meta"></div>
+    </div>
+  </section>
+
+<script>
+(async function(){
+  const BASE = 'https://dragonball-api.com/api/planets';
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get("id");
+
+  const lista = document.getElementById("lista");
+  const detalle = document.getElementById("detalle");
+
+  if(!id){
+    // Mostrar lista
+    lista.style.display = "block";
+    const grid = document.getElementById("grid");
+
+    function createCard(planet){
+      const div = document.createElement('div');
+      div.className = 'card';
+
+      const img = document.createElement('img');
+      img.src = planet.image || 'https://via.placeholder.com/220x140?text=Sin+Imagen';
+      img.alt = planet.name;
+      img.onclick = () => { window.location.href = `index.html?id=${planet.id}` };
+
+      const name = document.createElement('div');
+      name.className = 'name';
+      name.textContent = planet.name;
+
+      const link = document.createElement('a');
+      link.href = `index.html?id=${planet.id}`;
+      link.textContent = "Ver detalle";
+
+      div.appendChild(img);
+      div.appendChild(name);
+      div.appendChild(link);
+      return div;
+    }
+
+    try{
+      const res = await fetch(BASE + '?limit=100');
+      const data = await res.json();
+      const items = data.items || data || data.data || [];
+      items.forEach(p => grid.appendChild(createCard(p)));
+    }catch(err){
+      grid.textContent = "Error cargando planetas: " + err;
+    }
+  }else{
+    // Mostrar detalle
+    detalle.style.display = "block";
+    try{
+      const res = await fetch(`${BASE}/${id}`);
+      const planet = await res.json();
+
+      document.getElementById('name').textContent = planet.name || "Sin nombre";
+      document.getElementById('image').src = planet.image || 'https://via.placeholder.com/400x250?text=Sin+Imagen';
+
+      document.getElementById('meta').innerHTML = `
+        <p><strong>ID:</strong> ${planet.id}</p>
+        <p><strong>Descripción:</strong> ${planet.description || "No disponible"}</p>
+        <p><strong>Clima:</strong> ${planet.climate || "Desconocido"}</p>
+        <p><strong>Población:</strong> ${planet.population || "No especificada"}</p>
+      `;
+    }catch(err){
+      document.getElementById('name').textContent = "Error cargando planeta: " + err;
+    }
+  }
+})();
+</script>
+</body>
+</html>
